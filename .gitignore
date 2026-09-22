@@ -1,0 +1,15 @@
+# Environments
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDEs
+.vscode/
+.idea/
+
+# Data and models (optional - comment out if you want to upload the joblib files)
+# ml/data/
+# ml/saved_models/
