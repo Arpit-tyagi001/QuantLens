@@ -2,13 +2,26 @@ import yfinance as yf
 import pandas as pd
 import ta
 import numpy as np
+#Importing the cache tools
+from cachetools import TTLCache
+
+#Creating the memory bank
+#max-size=100, remember upto 100 tickers at once
+# ttl=300, data auto deletes after 300 sec (5 mins)
+feature_cache = TTLCache(maxsize=100, ttl=300)
 
 def get_latest_features(ticker: str) -> pd.DataFrame:
+    #checking cache before doing work
+    if ticker in feature_cache:
+        print(f"Loading {ticker} from cache (instant!)")
+        return feature_cache[ticker]
+    print("Downloading and calculating {ticker} (takes ~1 sec)...")
+
     # 1. Fetch data
     data = yf.download(ticker, period="6mo", progress=False)
     data.columns = data.columns.get_level_values(0)
 
-    # 2. Replicate all 14 features exactly as seen in your feature importances
+    # 2. Replicate all 14 features exactly as seen in our feature importances
     data["MA_10"] = data["Close"].rolling(window=10).mean()
     data["MA_50"] = data["Close"].rolling(window=50).mean()
     data["RSI"] = ta.momentum.RSIIndicator(data["Close"], window=14).rsi()
@@ -47,4 +60,7 @@ def get_latest_features(ticker: str) -> pd.DataFrame:
     ]
 
     # 5. Return a 1-row DataFrame ready for immediate scaling
-    return pd.DataFrame([latest[feature_cols].values], columns=feature_cols)
+    final_features = pd.DataFrame([latest[feature_cols].values], columns=feature_cols)
+    # Saving the final result to cache
+    feature_cache[ticker] = final_features
+    return final_features
