@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from ml.backtest import compare
 
 # IMPORT THE CENTRAL FEATURE ENGINE
 from ml.features import build_features, FEATURE_COLS
@@ -55,14 +56,27 @@ results = {}
 for name, model in models.items():
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
+    signal = pd.Series(preds, index=test_data.index)
     results[name] = {
         "Accuracy": accuracy_score(y_test, preds),
-        "Precision": precision_score(y_test, preds)
+        "Precision": precision_score(y_test, preds),
+        "Backtest": compare(test_data["Close"], signal),
     }
 
-print("\n--- Baseline Model Comparison ---")
-for name, metrics in results.items():
-    print(f"{name} -> Accuracy: {metrics['Accuracy']:.4f} | Precision: {metrics['Precision']:.4f}")
+print("\n--- Model Comparison (Test Set) ---")
+for name, m in results.items():
+    s = m["Backtest"]["strategy"]
+    print(
+        f"{name} -> Acc: {m['Accuracy']:.4f} | Prec: {m['Precision']:.4f} | "
+        f"Return: {s['total_return']:.2%} | Sharpe: {s['sharpe']} | "
+        f"MaxDD: {s['max_drawdown']:.2%} | Trades: {m['Backtest']['n_trades']}"
+    )
+
+bh = next(iter(results.values()))["Backtest"]["buy_hold"]
+print(
+    f"Buy & Hold -> Return: {bh['total_return']:.2%} | "
+    f"Sharpe: {bh['sharpe']} | MaxDD: {bh['max_drawdown']:.2%}"
+)
 
 # ---------- Step 5: Hyperparameter Tuning ----------
 tscv = TimeSeriesSplit(n_splits=5)
@@ -86,12 +100,20 @@ print("Best params:", grid.best_params_)
 
 best_model = grid.best_estimator_
 tuned_preds = best_model.predict(X_test_scaled)
+tuned_signal = pd.Series(tuned_preds, index=test_data.index)
+tuned_bt = compare(test_data["Close"], tuned_signal)
 
 print("\nTuned Model — Test Set Performance")
 print(f"Accuracy:  {accuracy_score(y_test, tuned_preds):.4f}")
 print(f"Precision: {precision_score(y_test, tuned_preds):.4f}")
 print(f"Recall:    {recall_score(y_test, tuned_preds):.4f}")
 print(f"F1:        {f1_score(y_test, tuned_preds):.4f}")
+print(
+    f"Return: {tuned_bt['strategy']['total_return']:.2%} | "
+    f"Sharpe: {tuned_bt['strategy']['sharpe']} | "
+    f"MaxDD: {tuned_bt['strategy']['max_drawdown']:.2%} | "
+    f"Trades: {tuned_bt['n_trades']}"
+)
 
 # ---------- Save the final artifacts ----------
 joblib.dump(best_model, "ml/saved_models/model.joblib")
