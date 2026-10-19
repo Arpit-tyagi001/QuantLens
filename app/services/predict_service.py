@@ -3,22 +3,21 @@ import pandas as pd
 from app.repository.stock_repository import get_latest_features
 import concurrent.futures  #python built-in multithreading engine
 
-model = joblib.load("ml/saved_models/model.joblib")
-scaler = joblib.load("ml/saved_models/scaler.joblib")
+# 1. Load the single unified pipeline
+pipeline = joblib.load("ml/saved_models/pipeline.joblib")
 
 #function for predicting direction of stocks
 def predict_direction(ticker: str) -> dict:
     features_df = get_latest_features(ticker)
 
-    scaled_features = scaler.transform(features_df)
-
-    probabilities = model.predict_proba(scaled_features)
+    # 2. Pass raw features directly to the pipeline (no manual scaling needed!)
+    probabilities = pipeline.predict_proba(features_df)
     up_probability = float(probabilities[0][1])
 
-    if up_probability >= 0.60:
+    if up_probability >= 0.55:
        direction = "up"
        action = "Strong Buy"
-    elif up_probability <= 0.40:
+    elif up_probability <= 0.45:
        direction = "Down"
        action = "Strong Sell / Short"
     else:
@@ -47,4 +46,3 @@ def predict_batch(tickers: list[str]) -> list[dict]:
             results.append({"ticker": ticker, "error": str(e)})
 
     return results
-

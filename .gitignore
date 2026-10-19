@@ -1,15 +1,18 @@
 # Environments
 venv/
 env/
+.venv/
+.env
 
 # Python cache
 __pycache__/
 *.pyc
 
-# IDEs
+# IDEs and OS files
 .vscode/
 .idea/
+.DS_Store
 
-# Data and models (optional - comment out if you want to upload the joblib files)
-# ml/data/
-# ml/saved_models/
+# Data and models (Ignored to keep the repo clean and lightweight)
+ml/data/*.csv
+ml/saved_models/*.joblib

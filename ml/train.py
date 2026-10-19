@@ -1,12 +1,16 @@
 import yfinance as yf
 import pandas as pd
 import joblib
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+from sklearn.pipeline import Pipeline
+from sklearn.calibration import CalibratedClassifierCV
+
 from ml.backtest import compare
 
 # IMPORT THE CENTRAL FEATURE ENGINE
@@ -30,10 +34,12 @@ data = build_features(data)
 data = data.iloc[:-1]
 print("Final data shape after features and dropna:", data.shape)
 
-# ---------- Step 3: Time-Series Split ----------
+# ---------- Step 3: Time-Series Split (80% Train / 20% Final Exam) ----------
 train_size = int(len(data) * 0.8)
 train_data = data.iloc[:train_size]
 test_data = data.iloc[train_size:]
+
+print("Direct B&H check:", (test_data["Close"].iloc[-1] / test_data["Close"].iloc[0]) - 1)
 
 # Use the imported FEATURE_COLS list to guarantee exact order
 X_train = train_data[FEATURE_COLS]
@@ -41,81 +47,78 @@ y_train = train_data["Target"]
 X_test = test_data[FEATURE_COLS]
 y_test = test_data["Target"]
 
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+# ---------- Step 4: Walk-Forward Validation (On Training Data) ----------
+print("\n--- Phase 2: Walk-Forward Validation (80% Train Data) ---")
+tscv = TimeSeriesSplit(n_splits=5)
 
-# ---------- Step 4: Model Comparison ----------
+# Create the base XGBoost model
+base_xgb = XGBClassifier(n_estimators=100, max_depth=3, random_state=42)
+
+# Wrap it in CalibratedClassifierCV using the SAME TimeSeriesSplit to prevent leakage
+calibrated_xgb = CalibratedClassifierCV(
+    estimator=base_xgb,
+    method="sigmoid",
+    cv=tscv
+)
+
+# Wrap models in Pipelines to prevent scaler data leakage
 models = {
-    "Logistic Regression": LogisticRegression(),
-    "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42),
-    "XGBoost": XGBClassifier(n_estimators=100, max_depth=3, random_state=42)
+    "Logistic Regression": Pipeline([
+        ("scaler", StandardScaler()),
+        ("model", LogisticRegression())
+    ]),
+    "Random Forest": Pipeline([
+        ("scaler", StandardScaler()),
+        ("model", RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42))
+    ]),
+    "XGBoost (Raw)": Pipeline([
+        ("scaler", StandardScaler()),
+        ("model", base_xgb)
+    ]),
+    "XGBoost (Calibrated)": Pipeline([
+        ("scaler", StandardScaler()),
+        ("model", calibrated_xgb)
+    ])
 }
 
-results = {}
-for name, model in models.items():
-    model.fit(X_train_scaled, y_train)
-    preds = model.predict(X_test_scaled)
-    signal = pd.Series(preds, index=test_data.index)
-    results[name] = {
-        "Accuracy": accuracy_score(y_test, preds),
-        "Precision": precision_score(y_test, preds),
-        "Backtest": compare(test_data["Close"], signal),
-    }
+wf_results = {}
+for name, pipeline in models.items():
+    # cross_val_score automatically respects the TimeSeriesSplit and Pipeline boundaries
+    cv_scores = cross_val_score(pipeline, X_train, y_train, cv=tscv, scoring="accuracy")
+    wf_results[name] = cv_scores
+    print(f"{name:22s} -> Mean Accuracy: {cv_scores.mean():.4f} (±{cv_scores.std():.4f})")
 
-print("\n--- Model Comparison (Test Set) ---")
-for name, m in results.items():
-    s = m["Backtest"]["strategy"]
-    print(
-        f"{name} -> Acc: {m['Accuracy']:.4f} | Prec: {m['Precision']:.4f} | "
-        f"Return: {s['total_return']:.2%} | Sharpe: {s['sharpe']} | "
-        f"MaxDD: {s['max_drawdown']:.2%} | Trades: {m['Backtest']['n_trades']}"
-    )
+# ---------- Step 5: Final Exam (20% Out-Of-Sample Data) ----------
+print("\n--- Final Exam: Best Model vs Buy & Hold (20% Test Data) ---")
 
-bh = next(iter(results.values()))["Backtest"]["buy_hold"]
+# We select the calibrated XGBoost model to see if it outperforms the Logistic baseline
+best_name = "XGBoost (Calibrated)"
+best_pipeline = models[best_name]
+
+# Fit on the ENTIRE 80% training set before testing on the 20%
+best_pipeline.fit(X_train, y_train)
+final_preds = best_pipeline.predict(X_test)
+
+final_signal = pd.Series(final_preds, index=test_data.index)
+final_bt = compare(test_data["Close"], final_signal)
+
+print(f"Chosen Model: {best_name}")
+print(f"Accuracy:  {accuracy_score(y_test, final_preds):.4f}")
+print(f"Precision: {precision_score(y_test, final_preds):.4f}")
+
+s = final_bt['strategy']
 print(
-    f"Buy & Hold -> Return: {bh['total_return']:.2%} | "
+    f"Return: {s['total_return']:.2%} | Sharpe: {s['sharpe']} | "
+    f"MaxDD: {s['max_drawdown']:.2%} | Trades: {final_bt['n_trades']}"
+)
+
+bh = final_bt['buy_hold']
+print(
+    f"\nBuy & Hold -> Return: {bh['total_return']:.2%} | "
     f"Sharpe: {bh['sharpe']} | MaxDD: {bh['max_drawdown']:.2%}"
 )
 
-# ---------- Step 5: Hyperparameter Tuning ----------
-tscv = TimeSeriesSplit(n_splits=5)
-
-param_grid = {
-    "n_estimators": [50, 100, 200],
-    "max_depth": [3, 5, 8],
-    "min_samples_leaf": [1, 5, 10]
-}
-
-grid = GridSearchCV(
-    RandomForestClassifier(random_state=42),
-    param_grid,
-    cv=tscv,
-    scoring="accuracy"
-)
-grid.fit(X_train_scaled, y_train)
-
-print("\n--- Tuned Random Forest (TimeSeriesSplit CV) ---")
-print("Best params:", grid.best_params_)
-
-best_model = grid.best_estimator_
-tuned_preds = best_model.predict(X_test_scaled)
-tuned_signal = pd.Series(tuned_preds, index=test_data.index)
-tuned_bt = compare(test_data["Close"], tuned_signal)
-
-print("\nTuned Model — Test Set Performance")
-print(f"Accuracy:  {accuracy_score(y_test, tuned_preds):.4f}")
-print(f"Precision: {precision_score(y_test, tuned_preds):.4f}")
-print(f"Recall:    {recall_score(y_test, tuned_preds):.4f}")
-print(f"F1:        {f1_score(y_test, tuned_preds):.4f}")
-print(
-    f"Return: {tuned_bt['strategy']['total_return']:.2%} | "
-    f"Sharpe: {tuned_bt['strategy']['sharpe']} | "
-    f"MaxDD: {tuned_bt['strategy']['max_drawdown']:.2%} | "
-    f"Trades: {tuned_bt['n_trades']}"
-)
-
 # ---------- Save the final artifacts ----------
-joblib.dump(best_model, "ml/saved_models/model.joblib")
-joblib.dump(scaler, "ml/saved_models/scaler.joblib")
-print("\nModel and scaler saved successfully.")
+# The Pipeline contains both the scaler and the model!
+joblib.dump(best_pipeline, "ml/saved_models/pipeline.joblib")
+print("\nPipeline saved successfully to ml/saved_models/pipeline.joblib")

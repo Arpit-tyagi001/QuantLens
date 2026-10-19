@@ -13,7 +13,7 @@ def run_backtest(close: pd.Series, signal: pd.Series, cost: float = 0.001) -> pd
 
 def summarize(returns: pd.Series) -> dict:
     growth = (1+returns).cumprod()
-    total_return = growth.iloc[1] - 1
+    total_return = growth.iloc[-1] - 1
     sharpe = returns.mean() / returns.std() * np.sqrt(TRADING_DAYS)
     drawdown = growth / growth.cummax() - 1
     return {
