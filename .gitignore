@@ -1,22 +1,33 @@
-# Environments
+# ========================
+# Backend (Python / AI)
+# ========================
 venv/
-env/
 .venv/
-.env
-
-# Python cache
+env/
 __pycache__/
 *.pyc
+.env
 
-# IDEs and OS files
+# Data (Ignored)
+ml/data/*.csv
+
+# Models (We ALLOW pipeline.joblib to be uploaded for Render!)
+# ml/saved_models/*.joblib
+
+# ========================
+# Frontend (React / Vite)
+# ========================
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# ========================
+# OS & IDE Files
+# ========================
 .vscode/
 .idea/
 .DS_Store
-
-# Data and models (Ignored to keep the repo clean and lightweight)
-ml/data/*.csv
-ml/saved_models/*.joblib
-
-# Frontend
-node_modules/
-dist/
+*.pem
