@@ -15,11 +15,11 @@
 
 ### Phase 2: ML Pipeline Alignment, Edge-Case Guards & Tests
 **Goal:** Align offline evaluation with live serving logic, eliminate math/fresh-clone bugs, and add automated test coverage.
-- [ ] Guard `BB_position` zero-width division in `ml/features.py` and `sharpe` zero-std / empty-series edge cases in `ml/backtest.py`.
-- [ ] Ensure `ml/data/` directory is created (`os.makedirs(..., exist_ok=True)`) in `ml/train.py`.
-- [ ] Align `ml/train.py` backtest evaluation with live `0.55` / `0.45` thresholds (and document/address single-ticker vs multi-ticker & MACD scale considerations).
-- [ ] Update `ml/shap_analysis.py` to use `ml.features.build_features` and `ml/saved_models/pipeline.joblib` (or retire deprecated `model.joblib`/`scaler.joblib`).
-- [ ] Add `pytest` unit/integration tests for `ml/features.py`, `ml/backtest.py`, `app/schemas/`, and `/predict` + `/predict/batch` endpoints.
+- [x] Guard `BB_position` zero-width division in `ml/features.py` and `sharpe` zero-std / empty-series edge cases in `ml/backtest.py`.
+- [x] Ensure `ml/data/` directory is created (`os.makedirs(..., exist_ok=True)`) in `ml/train.py`.
+- [x] Align `ml/train.py` backtest evaluation with live `0.55` / `0.45` thresholds (and document/address single-ticker vs multi-ticker & MACD scale considerations).
+- [x] Update `ml/shap_analysis.py` to use `ml.features.build_features` and `ml/saved_models/pipeline.joblib` (or retire deprecated `model.joblib`/`scaler.joblib`).
+- [x] Add `pytest` unit/integration tests for `ml/features.py`, `ml/backtest.py`, `app/schemas/`, and `/predict` + `/predict/batch` endpoints.
 
 ### Phase 3: Frontend Configuration & UX Polish
 **Goal:** Make frontend API configuration environment-driven, fix dead error handling, and clean up UI inconsistencies.
