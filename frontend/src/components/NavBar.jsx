@@ -1,31 +1,48 @@
 import React from 'react';
 
-export default function NavBar() {
+export default function NavBar({ onNavigate }) {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#060608]/70 backdrop-blur-xl border-b border-white/[0.03] shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
       <div className="container mx-auto px-6 h-16 flex items-center justify-between max-w-6xl">
-        
+
         {/* Logo Section */}
-        <div className="flex items-center gap-3 cursor-pointer group">
+        <button
+          type="button"
+          onClick={() => onNavigate?.('analysis')}
+          className="flex items-center gap-3 cursor-pointer group text-left"
+        >
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
             <span className="text-[#060608] font-black text-sm font-mono">Q</span>
           </div>
           <span className="font-bold text-zinc-100 tracking-wide text-sm">QuantLens</span>
-        </div>
+        </button>
 
         {/* Navigation Links */}
         <div className="hidden md:flex items-center gap-8">
-          <a href="#" className="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors">Terminal</a>
-          <a href="#" className="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors">Documentation</a>
-          
+          <button
+            type="button"
+            onClick={() => onNavigate?.('analysis')}
+            className="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+          >
+            Terminal
+          </button>
+          <a
+            href="https://github.com/Arpit-tyagi001/QuantLens#readme"
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+          >
+            Documentation
+          </a>
+
           <div className="h-4 w-px bg-zinc-800"></div> {/* Separator */}
 
           <div className="flex items-center gap-5">
             {/* LinkedIn (Updated to arpit-tyagi1000) */}
-            <a 
-              href="https://www.linkedin.com/in/arpit-tyagi1000" 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href="https://www.linkedin.com/in/arpit-tyagi1000"
+              target="_blank"
+              rel="noreferrer"
               className="flex items-center gap-1.5 text-sm font-medium text-zinc-400 hover:text-white transition-colors group"
             >
               <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-current opacity-70 group-hover:opacity-100 group-hover:text-[#0a66c2] transition-all" xmlns="http://www.w3.org/2000/svg">
@@ -35,10 +52,10 @@ export default function NavBar() {
             </a>
 
             {/* GitHub (Kept as Arpit-tyagi001) */}
-            <a 
-              href="https://github.com/Arpit-tyagi001" 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href="https://github.com/Arpit-tyagi001"
+              target="_blank"
+              rel="noreferrer"
               className="flex items-center gap-1.5 text-sm font-medium text-zinc-400 hover:text-white transition-colors group"
             >
               <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-current opacity-70 group-hover:opacity-100 transition-all" xmlns="http://www.w3.org/2000/svg">

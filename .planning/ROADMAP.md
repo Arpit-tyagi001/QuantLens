@@ -23,7 +23,7 @@
 
 ### Phase 3: Frontend Configuration & UX Polish
 **Goal:** Make frontend API configuration environment-driven, fix dead error handling, and clean up UI inconsistencies.
-- [ ] Use `import.meta.env.VITE_API_URL` with local fallback in `frontend/src/services/api.js` and re-throw HTTP/network errors so `App.jsx` displays `"API Connection Failed."` accurately.
-- [ ] Surface sanitized per-ticker error feedback in `frontend/src/components/GlassCard.jsx`.
-- [ ] Fix `NavBar.jsx` `href="#"` links and remove unused `tailwindcss-animate` classes (or install plugin) in `frontend/src/App.jsx`.
-- [ ] Verify `npm run build` passes cleanly.
+- [x] Use `import.meta.env.VITE_API_URL` with local fallback in `frontend/src/services/api.js` and re-throw HTTP/network errors so `App.jsx` displays `"API Connection Failed."` accurately.
+- [x] Surface sanitized per-ticker error feedback in `frontend/src/components/GlassCard.jsx`.
+- [x] Fix `NavBar.jsx` `href="#"` links and remove unused `tailwindcss-animate` classes (or install plugin) in `frontend/src/App.jsx`.
+- [x] Verify `npm run build` passes cleanly.
