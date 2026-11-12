@@ -1,16 +1,17 @@
-from app.services import predict_service #imports the service layer 
-from app.repository import stock_repository
+from app.services import predict_service  # imports the service layer
+
 
 def handle_predict(request):
-    #extract the string from incoming json request(eg RELIANCE.NS)
+    # Extract the string from incoming json request (eg RELIANCE.NS)
     ticker_symbol = request.ticker
-    
-    # pass the string directly to the service layer 
-    #now service layer will now handle talking to the repository amd making the prediction
+
+    # Pass the string directly to the service layer
+    # Service layer handles talking to the repository and making the prediction
     result = predict_service.predict_direction(ticker_symbol)
 
-    #return the JSON response to the user
+    # Return the JSON response to the user
     return result
+
 
 def handle_batch_predict(request):
     ticker_list = request.tickers
