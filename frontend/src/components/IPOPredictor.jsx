@@ -2,28 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { fetchIPOPresets, predictIPOGain } from '../services/api';
 
 const DEFAULT_FORM = {
-  company_name: 'Waaree Energies Ltd',
-  sector: 'Solar / Clean Energy',
-  issue_price: 1503,
-  lot_size: 9,
-  gmp: 1450,
-  subscription_qib: 215.0,
-  subscription_nii: 62.4,
-  subscription_retail: 10.7,
-  pe_ratio: 28.2,
-  industry_pe: 38.5,
-  annual_growth_rate: 28.0,
+  company_name: 'Watrana Rentals Ltd (Active SME)',
+  sector: 'Industrial Equipment / Logistics',
+  issue_price: 245,
+  lot_size: 600,
+  gmp: 65,
+  subscription_qib: 18.5,
+  subscription_nii: 12.2,
+  subscription_retail: 8.4,
+  pe_ratio: 18.0,
+  industry_pe: 24.0,
+  annual_growth_rate: 22.0,
   market_sentiment: 'Bullish',
 };
 
 export default function IPOPredictor() {
   const [presets, setPresets] = useState([]);
-  const [selectedPresetId, setSelectedPresetId] = useState('waaree');
+  const [selectedPresetId, setSelectedPresetId] = useState('watrana');
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedHorizon, setSelectedHorizon] = useState(3); // 1, 3, 5 years
+
+  // Application Lot Sizing Calculator State
+  const [appliedLots, setAppliedLots] = useState(1);
+  const [investorCategory, setInvestorCategory] = useState('retail'); // 'retail' | 'shni' | 'bhni'
 
   // Load presets on mount
   useEffect(() => {
@@ -85,6 +89,7 @@ export default function IPOPredictor() {
 
   const handleSelectPreset = (p) => {
     setSelectedPresetId(p.id);
+    setAppliedLots(1);
     setFormData({
       company_name: p.company_name,
       sector: p.sector,
@@ -113,9 +118,31 @@ export default function IPOPredictor() {
     }));
   };
 
+  const handleCategorySelect = (cat) => {
+    setInvestorCategory(cat);
+    if (cat === 'retail') {
+      setAppliedLots(1);
+    } else if (cat === 'shni') {
+      // Small HNI is generally > 2 Lakhs
+      const minLots = Math.max(14, Math.ceil(200000 / (formData.issue_price * formData.lot_size)));
+      setAppliedLots(minLots);
+    } else if (cat === 'bhni') {
+      // Big HNI is > 10 Lakhs
+      const minLots = Math.max(68, Math.ceil(1000000 / (formData.issue_price * formData.lot_size)));
+      setAppliedLots(minLots);
+    }
+  };
+
   const currentProjection = prediction?.long_term_projections?.find(
     (p) => p.year === selectedHorizon
   ) || prediction?.long_term_projections?.[1];
+
+  // Capital & profit calculation for lot simulator
+  const totalShares = appliedLots * formData.lot_size;
+  const totalInvestment = totalShares * formData.issue_price;
+  const estimatedTotalProfit = prediction
+    ? Math.round(prediction.expected_listing_gain_inr * totalShares)
+    : 0;
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -123,25 +150,30 @@ export default function IPOPredictor() {
       <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] backdrop-blur-xl shadow-2xl relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
           <div>
-            <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-              IPO Expected Listing Gain & Long-Term Price Predictor
+              <span className="text-xs font-mono uppercase tracking-widest text-emerald-400">
+                Quantitative Valuation Suite
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-zinc-100">
+              IPO Expected Listing Gain & Multi-Year Predictor
             </h2>
-            <p className="text-xs text-zinc-400 mt-1">
-              Multi-factor quantitative engine factoring GMP, QIB/HNI demand elasticity, relative valuation & multi-year EPS compounding.
+            <p className="text-xs text-zinc-400 mt-1 max-w-2xl leading-relaxed">
+              Real-time multi-factor pricing engine accounting for Grey Market Premium (GMP), institutional QIB anchor participation, relative P/E multiples, and compound long-term earnings growth.
             </p>
           </div>
 
-          <div className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
-            <span>Model:</span>
-            <span className="text-emerald-400 font-semibold">Institutional Multi-Factor</span>
+          <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 bg-black/40 px-3.5 py-2 rounded-xl border border-white/5">
+            <span className="text-zinc-500">Mode:</span>
+            <span className="text-emerald-400 font-semibold">Institutional Pricing Engine</span>
           </div>
         </div>
 
         {/* Preset selector pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider shrink-0 mr-1">
-            Presets:
+            Active & Landmark IPOs:
           </span>
           {presets.map((p) => {
             const isSelected = selectedPresetId === p.id;
@@ -151,7 +183,7 @@ export default function IPOPredictor() {
                 onClick={() => handleSelectPreset(p)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 border ${
                   isSelected
-                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
                     : 'bg-black/30 border-white/5 text-zinc-400 hover:text-zinc-200 hover:border-white/10'
                 }`}
               >
@@ -163,18 +195,18 @@ export default function IPOPredictor() {
             onClick={handleCustomMode}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 border ${
               selectedPresetId === 'custom'
-                ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.15)]'
+                ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
                 : 'bg-black/30 border-white/5 text-zinc-400 hover:text-zinc-200 hover:border-white/10'
             }`}
           >
-            + Custom IPO Parameters
+            + Custom Issue
           </button>
         </div>
       </div>
 
-      {/* 2. Main Two-Column Layout: Inputs on Left, Real-Time Analytics on Right */}
+      {/* 2. Main Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Interactive Input Parameters (5 Cols) */}
+        {/* Left Column: Interactive Input Parameters & Lot Simulator (5 Cols) */}
         <div className="lg:col-span-5 space-y-5">
           <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] shadow-xl backdrop-blur-xl space-y-4">
             <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400 border-b border-white/[0.04] pb-2">
@@ -342,6 +374,78 @@ export default function IPOPredictor() {
               </div>
             </div>
           </div>
+
+          {/* APPLICATION LOT SIZING & TOTAL PROFIT SIMULATOR CARD */}
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] shadow-xl backdrop-blur-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/[0.04] pb-2">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                Application Lot & Capital Simulator
+              </h3>
+              <span className="text-[10px] font-mono text-zinc-500">Live Sizing</span>
+            </div>
+
+            {/* Category selection */}
+            <div className="grid grid-cols-3 gap-1 bg-black/40 p-1 rounded-xl border border-white/5">
+              {[
+                { id: 'retail', label: 'Retail (<₹2L)' },
+                { id: 'shni', label: 'sHNI (₹2L-10L)' },
+                { id: 'bhni', label: 'bHNI (>₹10L)' },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => handleCategorySelect(c.id)}
+                  className={`py-1 text-[11px] font-medium rounded-lg transition-all ${
+                    investorCategory === c.id
+                      ? 'bg-zinc-800 text-cyan-300 border border-zinc-700'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Lots selector slider & input */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-zinc-400">Lots Applied:</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setAppliedLots((prev) => Math.max(1, prev - 1))}
+                    className="w-6 h-6 rounded bg-zinc-800 text-zinc-300 font-bold hover:bg-zinc-700 flex items-center justify-center text-xs"
+                  >
+                    -
+                  </button>
+                  <span className="text-zinc-100 font-bold px-2">{appliedLots}</span>
+                  <button
+                    onClick={() => setAppliedLots((prev) => prev + 1)}
+                    className="w-6 h-6 rounded bg-zinc-800 text-zinc-300 font-bold hover:bg-zinc-700 flex items-center justify-center text-xs"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2 text-xs font-mono">
+                <div className="p-3 rounded-xl bg-black/30 border border-white/5">
+                  <span className="text-[10px] text-zinc-500 block mb-0.5">Required Capital</span>
+                  <div className="text-sm font-bold text-zinc-100">
+                    ₹{totalInvestment.toLocaleString('en-IN')}
+                  </div>
+                  <span className="text-[10px] text-zinc-500">{totalShares} shares</span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/20">
+                  <span className="text-[10px] text-emerald-400 block mb-0.5">Projected Net Profit</span>
+                  <div className="text-sm font-bold text-emerald-300">
+                    {estimatedTotalProfit >= 0 ? '+' : ''}₹{estimatedTotalProfit.toLocaleString('en-IN')}
+                  </div>
+                  <span className="text-[10px] text-emerald-500/80">Listing day realization</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Listing Diagnostics & Long-Term Price Predictor (7 Cols) */}
@@ -448,7 +552,7 @@ export default function IPOPredictor() {
                   </div>
                 </div>
 
-                <div className="pt-3 text-xs text-zinc-400 flex items-center justify-between">
+                <div className="pt-3 text-xs text-zinc-400 flex flex-wrap items-center justify-between gap-2">
                   <span>Valuation Check: <strong className="text-zinc-200">{prediction.valuation_status}</strong></span>
                   <span className="font-mono text-[11px] text-zinc-500">Weighted Sub: {prediction.total_subscription_weighted}x</span>
                 </div>
