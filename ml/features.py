@@ -21,14 +21,14 @@ FEATURE_COLS = [
 
 
 def build_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Takes raw OHLCV data and returns a DataFrame with 14 features."""
+    """Takes raw OHLCV data and returns a DataFrame with 14 scale-invariant features."""
     data = df.copy()
 
     # Price MAs
     ma_10 = data["Close"].rolling(window=10).mean()
     ma_50 = data["Close"].rolling(window=50).mean()
 
-    # Relative trend features (fixing the shap price-level trap)
+    # Relative trend features
     data["Dist_from_MA10"] = (data["Close"] - ma_10) / ma_10
     data["MA_Crossover"] = ma_10 / ma_50
 
@@ -38,10 +38,12 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     data["Volatility"] = data["Daily_Return"].rolling(window=10).std()
     data["Volume_change"] = data["Volume"].pct_change()
 
+    # Relative MACD (normalized by Close to eliminate price-scale bias)
     macd = ta.trend.MACD(data["Close"])
-    data["MACD"] = macd.macd()
-    data["MACD_signal"] = macd.macd_signal()
-    data["MACD_diff"] = macd.macd_diff()
+    close = data["Close"]
+    data["MACD"] = np.where(close == 0, 0.0, macd.macd() / close)
+    data["MACD_signal"] = np.where(close == 0, 0.0, macd.macd_signal() / close)
+    data["MACD_diff"] = np.where(close == 0, 0.0, macd.macd_diff() / close)
 
     bb = ta.volatility.BollingerBands(data["Close"], window=20, window_dev=2)
     data["BB_width"] = bb.bollinger_wband()
