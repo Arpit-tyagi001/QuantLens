@@ -12,7 +12,7 @@ export default function NavBar({ onNavigate }) {
           className="flex items-center gap-2.5 cursor-pointer group text-left"
         >
           <img
-            src="/quantlens_favicon.png"
+            src="/quantlens_favicon.svg"
             alt="QuantLens Logo"
             className="w-8 h-8 rounded-lg object-contain shadow-[0_0_15px_rgba(16,185,129,0.25)] group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] group-hover:scale-105 transition-all"
           />

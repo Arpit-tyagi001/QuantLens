@@ -67,10 +67,10 @@ export default function App() {
             </span>
           </div>
 
-          {/* Official Full HD Logo */}
+          {/* Official Full HD SVG Logo */}
           <div className="mb-4 flex items-center justify-center">
             <img
-              src="/quantlens_full_logo_hd.png"
+              src="/quantlens_full_logo_hd.svg"
               alt="QuantLens Full Logo"
               className="h-16 sm:h-20 w-auto object-contain drop-shadow-[0_0_35px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-transform duration-300"
             />
