@@ -7,6 +7,53 @@ from app.schemas.ipo_schema import (
 )
 
 PRESET_IPOS: List[PresetIPO] = [
+    # Active Live Issues (Late November 2026)
+    PresetIPO(
+        id="watrana",
+        company_name="Watrana Rentals Ltd (Active SME)",
+        sector="Industrial Equipment / Logistics",
+        issue_price=245.0,
+        lot_size=600,
+        gmp=65.0,
+        subscription_qib=18.5,
+        subscription_nii=12.2,
+        subscription_retail=8.4,
+        pe_ratio=18.0,
+        industry_pe=24.0,
+        annual_growth_rate=22.0,
+        market_sentiment="Bullish",
+    ),
+    PresetIPO(
+        id="mahanadi",
+        company_name="Mahanadi Coalfields Ltd (Active Mainboard)",
+        sector="Mining & Energy PSU",
+        issue_price=136.0,
+        lot_size=110,
+        gmp=0.70,
+        subscription_qib=1.85,
+        subscription_nii=0.92,
+        subscription_retail=0.75,
+        pe_ratio=8.5,
+        industry_pe=10.0,
+        annual_growth_rate=9.0,
+        market_sentiment="Neutral",
+    ),
+    PresetIPO(
+        id="foodlink",
+        company_name="Foodlink F&B Holdings (Upcoming)",
+        sector="Hospitality & Catering",
+        issue_price=191.0,
+        lot_size=75,
+        gmp=12.0,
+        subscription_qib=4.5,
+        subscription_nii=3.2,
+        subscription_retail=2.1,
+        pe_ratio=32.0,
+        industry_pe=38.0,
+        annual_growth_rate=18.0,
+        market_sentiment="Neutral",
+    ),
+    # Landmark Benchmark IPOs
     PresetIPO(
         id="waaree",
         company_name="Waaree Energies Ltd",
