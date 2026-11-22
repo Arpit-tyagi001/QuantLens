@@ -9,12 +9,16 @@ export default function NavBar({ onNavigate }) {
         <button
           type="button"
           onClick={() => onNavigate?.('analysis')}
-          className="flex items-center gap-3 cursor-pointer group text-left"
+          className="flex items-center gap-2.5 cursor-pointer group text-left"
         >
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
-            <span className="text-[#060608] font-black text-sm font-mono">Q</span>
-          </div>
-          <span className="font-bold text-zinc-100 tracking-wide text-sm">QuantLens</span>
+          <img
+            src="/quantlens_favicon.png"
+            alt="QuantLens Logo"
+            className="w-8 h-8 rounded-lg object-contain shadow-[0_0_15px_rgba(16,185,129,0.25)] group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] group-hover:scale-105 transition-all"
+          />
+          <span className="font-bold text-zinc-100 tracking-wide text-sm group-hover:text-emerald-300 transition-colors">
+            QuantLens
+          </span>
         </button>
 
         {/* Navigation Links */}

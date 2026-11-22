@@ -55,8 +55,8 @@ export default function App() {
 
       <div className="flex-grow container mx-auto px-6 pt-24 py-12 max-w-5xl relative z-10">
 
-        {/* HERO SECTION */}
-        <header className="flex flex-col items-center mb-10">
+        {/* HERO SECTION WITH OFFICIAL QUANTLENS LOGO */}
+        <header className="flex flex-col items-center mb-10 text-center">
           <div className="flex items-center gap-2.5 mb-6 px-3 py-1.5 rounded-full bg-white/[0.02] border border-white/5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] backdrop-blur-md">
             <div className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -67,10 +67,14 @@ export default function App() {
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 text-center">
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-500">Quant</span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Lens</span>
-          </h1>
+          {/* Official Full HD Logo */}
+          <div className="mb-4 flex items-center justify-center">
+            <img
+              src="/quantlens_full_logo_hd.png"
+              alt="QuantLens Full Logo"
+              className="h-16 sm:h-20 w-auto object-contain drop-shadow-[0_0_35px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-transform duration-300"
+            />
+          </div>
 
           <p className="text-base text-zinc-400 font-light tracking-wide max-w-xl text-center">
             Calibrated machine learning, live precious metals feed & quantitative IPO listing analytics.
