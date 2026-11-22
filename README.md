@@ -16,9 +16,11 @@ QuantLens operates on a decoupled, 3-tier architecture:
 
 2. **Backend API (FastAPI):**
    * A high-performance, multithreaded REST API that ingests real-time market data via `yfinance`, processes it through the saved model pipeline, and serves actionable trading signals (Strong Buy, Hold, Strong Sell) based on calibrated confidence thresholds.
+   * **Live Commodity Engine:** Multithreaded COMEX spot feeds for Gold (`GC=F`) and Silver (`SI=F`) with live USD/INR currency conversions (`INR=X`).
+   * **IPO Expected Listing Gain & Long-Term Price Predictor:** Multi-factor valuation module factoring Grey Market Premium (GMP), QIB/NII/Retail demand elasticity, relative P/E multiples, and 1Y/3Y/5Y compound earnings projections.
 
 3. **Frontend Dashboard (React + Tailwind CSS):**
-   * A minimalist, institutional-grade Spatial UI featuring dynamic glassmorphism, segmented navigation, and reactive state management. It gracefully handles API failures and invalid tickers without UI crashes.
+   * A minimalist, institutional-grade Spatial UI featuring dynamic glassmorphism, live precious metals ticker, interactive IPO listing simulator, and segmented navigation. It gracefully handles API failures and invalid tickers without UI crashes.
 
 ## 📊 Backtest Performance
 

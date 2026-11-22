@@ -36,3 +36,53 @@ export async function fetchBatchPredictions(tickers) {
   const data = await response.json();
   return Array.isArray(data?.batch_results) ? data.batch_results : [];
 }
+
+/**
+ * Fetches real-time Gold, Silver, and USD/INR commodity prices.
+ */
+export async function fetchLiveCommodities() {
+  const response = await fetch(`${API_BASE_URL}/commodities/live`);
+  if (!response.ok) {
+    throw new Error(`Commodities API error: ${response.status}`);
+  }
+  return await response.json();
+}
+
+/**
+ * Fetches pre-configured landmark and active IPO presets.
+ */
+export async function fetchIPOPresets() {
+  const response = await fetch(`${API_BASE_URL}/ipo/presets`);
+  if (!response.ok) {
+    throw new Error(`IPO Presets API error: ${response.status}`);
+  }
+  return await response.json();
+}
+
+/**
+ * Computes expected listing gain and 1Y, 3Y, 5Y price projections.
+ */
+export async function predictIPOGain(ipoData) {
+  const response = await fetch(`${API_BASE_URL}/ipo/predict`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(ipoData),
+  });
+
+  if (!response.ok) {
+    let message = `IPO Prediction API error: ${response.status}`;
+    try {
+      const errBody = await response.json();
+      if (typeof errBody?.detail === "string") {
+        message = errBody.detail;
+      }
+    } catch {
+      // Ignore
+    }
+    throw new Error(message);
+  }
+
+  return await response.json();
+}
