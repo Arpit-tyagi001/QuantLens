@@ -38,12 +38,30 @@ export async function fetchBatchPredictions(tickers) {
 }
 
 /**
- * Fetches real-time Gold, Silver, and USD/INR commodity prices.
+ * Fetches real-time Gold, Silver, Platinum, Oil, Copper, and USD/INR commodity prices.
  */
 export async function fetchLiveCommodities() {
   const response = await fetch(`${API_BASE_URL}/commodities/live`);
   if (!response.ok) {
     throw new Error(`Commodities API error: ${response.status}`);
+  }
+  return await response.json();
+}
+
+/**
+ * Converts custom bullion weights (grams, tola, oz) with duty + GST breakdown.
+ */
+export async function convertBullion(conversionData) {
+  const response = await fetch(`${API_BASE_URL}/commodities/convert`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(conversionData),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Bullion Conversion API error: ${response.status}`);
   }
   return await response.json();
 }
