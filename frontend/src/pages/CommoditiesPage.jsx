@@ -34,7 +34,7 @@ export default function CommoditiesPage() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 60000); // 1-minute auto-refresh
+    const interval = setInterval(loadData, 120000); // 2-minute auto-refresh to balance real-time updates and rate limits
     return () => clearInterval(interval);
   }, []);
 
@@ -106,18 +106,18 @@ export default function CommoditiesPage() {
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${data?.is_live !== false ? 'bg-amber-400' : 'bg-zinc-500'} opacity-75`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${data?.is_live !== false ? 'bg-amber-400' : 'bg-zinc-500'}`}></span>
             </span>
-            <span className="text-xs font-mono uppercase tracking-widest text-amber-400">
-              Live Macro Commodities &amp; Precious Metals Terminal
+            <span className={`text-xs font-mono uppercase tracking-widest ${data?.is_live !== false ? 'text-amber-400' : 'text-zinc-400'}`}>
+              {data?.is_live !== false ? 'Live Macro Commodities & Precious Metals Feed' : 'Cached Market Snapshot Stream'}
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-100 tracking-tight">
             Institutional Bullion &amp; Commodities Radar
           </h2>
           <p className="text-xs text-zinc-400 mt-1 max-w-2xl leading-relaxed">
-            Real-time COMEX futures spot prices, physical landed domestic Indian benchmarks (basic customs duty + AIDC cess + 3% GST), multi-asset ratios, and bullion conversion engine.
+            Real-time COMEX futures spot prices, physical landed domestic Indian benchmarks (statutory 6% customs duty + AIDC cess + 3% GST), multi-asset ratios, and bullion conversion engine.
           </p>
         </div>
 
@@ -472,7 +472,7 @@ export default function CommoditiesPage() {
                 </div>
 
                 <div className="flex justify-between text-zinc-400">
-                  <span>Basic Customs Duty + AIDC Cess (15%):</span>
+                  <span>Basic Customs Duty + AIDC Cess (6% post-budget):</span>
                   <span className="text-amber-400">+₹{calcResult.customs_tariff_inr.toLocaleString('en-IN')}</span>
                 </div>
 

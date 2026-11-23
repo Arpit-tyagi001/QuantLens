@@ -44,6 +44,7 @@ class CommodityResponse(BaseModel):
     history_30d: Optional[Dict[str, List[HistoryPoint]]] = None
     karat_rates_inr: Optional[Dict[str, float]] = None
     timestamp: str
+    is_live: Optional[bool] = True
 
 
 class BullionConvertRequest(BaseModel):

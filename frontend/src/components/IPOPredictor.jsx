@@ -153,20 +153,20 @@ export default function IPOPredictor() {
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
               <span className="text-xs font-mono uppercase tracking-widest text-emerald-400">
-                Quantitative Valuation Suite
+                Institutional Valuation &amp; GMP Engine
               </span>
             </div>
             <h2 className="text-2xl font-bold text-zinc-100">
-              IPO Expected Listing Gain & Multi-Year Predictor
+              IPO Expected Listing Gain &amp; Multi-Year Valuation Suite
             </h2>
             <p className="text-xs text-zinc-400 mt-1 max-w-2xl leading-relaxed">
-              Real-time multi-factor pricing engine accounting for Grey Market Premium (GMP), institutional QIB anchor participation, relative P/E multiples, and compound long-term earnings growth.
+              Multi-factor heuristic pricing model integrating Grey Market Premium (GMP) elasticity, institutional QIB anchor demand buffers, relative P/E multiples, and retail allotment probability.
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 bg-black/40 px-3.5 py-2 rounded-xl border border-white/5">
-            <span className="text-zinc-500">Mode:</span>
-            <span className="text-emerald-400 font-semibold">Institutional Pricing Engine</span>
+            <span className="text-zinc-500">Methodology:</span>
+            <span className="text-emerald-400 font-semibold">GMP Multi-Factor Heuristic</span>
           </div>
         </div>
 

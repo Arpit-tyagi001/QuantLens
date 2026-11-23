@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.main import app
+from app.main import app, rate_limiter
 from app.schemas.predict_schema import BatchPredictRequest, PredictRequest
 from ml.features import FEATURE_COLS
 
@@ -66,3 +66,24 @@ def test_predict_batch_sanitizes_errors():
     items = {item["ticker"]: item for item in resp.json()["batch_results"]}
     assert "direction" in items["AAPL"]
     assert items["ERR"]["error"] == "Prediction failed."
+
+
+def test_rate_limiter_throttles_excessive_traffic():
+    # Save original state and simulate an IP exhausting quota
+    ip = "192.168.1.99"
+    headers = {"x-forwarded-for": ip}
+
+    # Reset limiter for this IP
+    rate_limiter.requests[ip] = []
+
+    # Send up to the limit
+    for _ in range(rate_limiter.max_requests):
+        rate_limiter.requests[ip].append(1e12)  # Far future timestamp to fill bucket
+
+    # Next request must be throttled with 429
+    resp = client.get("/", headers=headers)
+    assert resp.status_code == 429
+    assert "Rate limit exceeded" in resp.json()["detail"]
+
+    # Cleanup
+    rate_limiter.requests.pop(ip, None)

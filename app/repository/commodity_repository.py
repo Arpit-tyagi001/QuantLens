@@ -5,8 +5,8 @@ import pandas as pd
 import yfinance as yf
 from cachetools import TTLCache
 
-# Cache live commodity data for 60 seconds
-commodity_cache = TTLCache(maxsize=10, ttl=60)
+# Cache live commodity data for 300 seconds (5 minutes) to protect against rate limits
+commodity_cache = TTLCache(maxsize=10, ttl=300)
 _cache_lock = threading.Lock()
 
 COMMODITY_METADATA = {
@@ -40,6 +40,7 @@ def get_live_commodities() -> Dict[str, Any]:
 
     results = {}
     history_dict = {}
+    is_live_stream = True
 
     try:
         data = yf.download(all_tickers, period="1mo", progress=False)
@@ -94,7 +95,8 @@ def get_live_commodities() -> Dict[str, Any]:
             ]
 
     except Exception:
-        # Global fallback if yfinance completely times out
+        # Global fallback if yfinance completely times out or is rate limited
+        is_live_stream = False
         for key, sym in symbols_map.items():
             fb = FALLBACK_SNAPSHOT.get(key, {"price": 100.0, "change_abs": 0.0, "change_pct": 0.0, "day_high": 105.0, "day_low": 95.0})
             results[key] = {
@@ -109,6 +111,7 @@ def get_live_commodities() -> Dict[str, Any]:
         "history_30d": history_dict,
         "usdinr": results.get("usdinr", {"price": 92.67}),
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "is_live": is_live_stream,
     }
 
     with _cache_lock:

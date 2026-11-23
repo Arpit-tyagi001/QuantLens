@@ -13,8 +13,9 @@ TROY_OZ_TO_GRAMS = 31.1034768
 GRAMS_PER_TOLA = 11.6638038
 POUND_TO_KG = 0.45359237
 
-# India landed bullion factor: ~15% basic customs duty + AIDC cess + 3% GST (~18.45% total tax & landed costs)
-INDIA_DOMESTIC_LANDED_FACTOR = 1.15 * 1.03
+# India statutory landed bullion factor:
+# Post-July 2024 Union Budget: 6% basic customs duty + AIDC cess + 3% GST (~9.18% total landed duty)
+INDIA_DOMESTIC_LANDED_FACTOR = 1.06 * 1.03
 
 
 def get_processed_commodities() -> CommodityResponse:
@@ -198,6 +199,7 @@ def get_processed_commodities() -> CommodityResponse:
             "Platinum_10g": platinum_10g,
         },
         timestamp=raw.get("timestamp", ""),
+        is_live=raw.get("is_live", True),
     )
 
 
@@ -228,8 +230,8 @@ def calculate_bullion_conversion(req: BullionConvertRequest) -> BullionConvertRe
     spot_usd = round(troy_oz * base_spot_usd_oz * purity, 2)
     spot_inr = round(spot_usd * usdinr, 2)
 
-    # 15% Customs + AIDC
-    customs_inr = round(spot_inr * 0.15, 2)
+    # Statutory 6% Customs Duty + AIDC Cess (Post-July 2024 Budget)
+    customs_inr = round(spot_inr * 0.06, 2)
     subtotal_inr = spot_inr + customs_inr
 
     # 3% GST
