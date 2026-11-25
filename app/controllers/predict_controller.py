@@ -17,3 +17,7 @@ def handle_batch_predict(request):
     ticker_list = request.tickers
     results = predict_service.predict_batch(ticker_list)
     return {"batch_results": results}
+
+
+def handle_get_ledger():
+    return predict_service.get_prediction_ledger()

@@ -51,7 +51,7 @@ Most retail financial platforms and "algorithmic trading bots" fail in real capi
 | **Ignoring Transaction Friction** | Models show 80%+ win rates on paper, but bleed capital in production due to broker commissions, STT, exchange fees, and bid-ask slippage. | Evaluated with a strict **0.1% transaction cost deduction per trade** on out-of-sample final exam test data. |
 | **Uncalibrated Margin Overconfidence** | Raw XGBoost or neural networks produce uncalibrated margin scores, misinterpreting market noise as high conviction and overtrading. | Applies **Probability Calibration (`CalibratedClassifierCV`)** via Platt scaling, reducing trades from 114 to 9 ultra-high-conviction positions. |
 | **Naive Retail IPO Hype** | Retail investors bid blindly on unvetted GMP rumors without factoring institutional anchor lock-ins, relative valuation multiples, or quota shortages. | Quantitative listing model weighs QIB anchor demand (50%), NII/HNI participation (15%), and retail demand (35%) alongside P/E peer discounts. |
-| **Bullion Pricing Opacity** | Domestic bullion prices in India trade at statutory premiums over international spot due to customs and GST that retail calculators omit. | Computes accurate landed domestic prices incorporating basic customs duty, AIDC cess (~15%), and 3% GST for 24K, 22K, and 18K purity. |
+| **Bullion Pricing Opacity** | Domestic bullion prices in India trade at statutory premiums over international spot due to customs and GST that retail calculators omit. | Computes accurate landed domestic prices incorporating basic customs duty + AIDC cess (6% post-July 2024 budget rate), and 3% GST for 24K, 22K, and 18K purity. |
 
 ---
 

@@ -11,6 +11,7 @@ __pycache__/
 
 # Data (Ignored)
 ml/data/*.csv
+data/*.db
 
 # Models (We ALLOW pipeline.joblib to be uploaded for Render!)
 # ml/saved_models/*.joblib

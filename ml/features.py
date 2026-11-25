@@ -1,6 +1,7 @@
 import pandas as pd
 import ta
 import numpy as np
+from typing import List, Dict, Any
 
 FEATURE_COLS = [
     "Dist_from_MA10",
@@ -65,3 +66,91 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     data = data.dropna()
 
     return data
+
+
+def explain_feature_drivers(row: pd.Series) -> List[Dict[str, Any]]:
+    """Generates explainable qualitative feature drivers from the latest technical indicator values."""
+    drivers = []
+
+    # 1. RSI Momentum Driver
+    rsi = float(row.get("RSI", 50.0))
+    if rsi <= 35.0:
+        drivers.append({
+            "name": "RSI Oversold",
+            "impact": "positive",
+            "badge": f"{rsi:.1f} (Rebound Potential)",
+        })
+    elif rsi >= 65.0:
+        drivers.append({
+            "name": "RSI Overbought",
+            "impact": "negative",
+            "badge": f"{rsi:.1f} (Exhaustion Risk)",
+        })
+    else:
+        drivers.append({
+            "name": "RSI Neutral",
+            "impact": "neutral",
+            "badge": f"{rsi:.1f} (Balanced Flow)",
+        })
+
+    # 2. MACD Momentum Driver
+    macd_diff = float(row.get("MACD_diff", 0.0))
+    if macd_diff > 0.0005:
+        drivers.append({
+            "name": "MACD Histogram",
+            "impact": "positive",
+            "badge": "Bullish Momentum Spread",
+        })
+    elif macd_diff < -0.0005:
+        drivers.append({
+            "name": "MACD Histogram",
+            "impact": "negative",
+            "badge": "Bearish Divergence",
+        })
+
+    # 3. Moving Average Alignment Driver
+    ma_cross = float(row.get("MA_Crossover", 1.0))
+    if ma_cross >= 1.01:
+        drivers.append({
+            "name": "Moving Average",
+            "impact": "positive",
+            "badge": "Golden Alignment (MA10 > MA50)",
+        })
+    elif ma_cross <= 0.99:
+        drivers.append({
+            "name": "Moving Average",
+            "impact": "negative",
+            "badge": "Trend Breakdown (MA10 < MA50)",
+        })
+
+    # 4. Volume Surge Driver
+    vol_chg = float(row.get("Volume_change", 0.0))
+    if vol_chg >= 0.25:
+        drivers.append({
+            "name": "Volume Surge",
+            "impact": "positive",
+            "badge": f"+{vol_chg * 100:.0f}% Institutional Flow",
+        })
+    elif vol_chg <= -0.25:
+        drivers.append({
+            "name": "Volume Contraction",
+            "impact": "neutral",
+            "badge": f"{vol_chg * 100:.0f}% Below Average",
+        })
+
+    # 5. Bollinger Band Position Driver
+    bb_pos = float(row.get("BB_position", 0.5))
+    if bb_pos <= 0.20:
+        drivers.append({
+            "name": "Bollinger Bands",
+            "impact": "positive",
+            "badge": "Lower Band Mean-Reversion",
+        })
+    elif bb_pos >= 0.80:
+        drivers.append({
+            "name": "Bollinger Bands",
+            "impact": "negative",
+            "badge": "Upper Band Resistance Zone",
+        })
+
+    return drivers[:4]

@@ -104,3 +104,14 @@ export async function predictIPOGain(ipoData) {
 
   return await response.json();
 }
+
+/**
+ * Fetches verified prediction track record and rolling win rate.
+ */
+export async function fetchPredictionLedger() {
+  const response = await fetch(`${API_BASE_URL}/predict/ledger`);
+  if (!response.ok) {
+    throw new Error(`Ledger API error: ${response.status}`);
+  }
+  return await response.json();
+}

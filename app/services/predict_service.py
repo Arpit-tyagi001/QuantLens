@@ -1,8 +1,9 @@
-import concurrent.futures  # python built-in multithreading engine
+import concurrent.futures
 import logging
 import joblib
 import pandas as pd
-from app.repository.stock_repository import get_latest_features
+from app.repository.stock_repository import get_latest_features_with_context, get_latest_features
+from app.repository import db_repository
 
 logger = logging.getLogger(__name__)
 
@@ -10,11 +11,22 @@ logger = logging.getLogger(__name__)
 pipeline = joblib.load("ml/saved_models/pipeline.joblib")
 
 
-# Function for predicting direction of stocks
-def predict_direction(ticker: str) -> dict:
-    features_df = get_latest_features(ticker)
+def calculate_kelly_size(confidence: float, max_alloc: float = 8.0) -> float:
+    """Computes a risk-managed Fractional Kelly allocation percentage based on statistical edge."""
+    edge = abs(confidence - 0.50)
+    if edge < 0.05:  # Inside neutral band (45% - 55%)
+        return 0.0
+    # Half-Kelly buffer: 55% -> 2.0%, 60% -> 4.0%, capped at 8%
+    size = round(min(max_alloc, (edge * 4.0) * 10.0), 1)
+    return size
 
-    # 2. Pass raw features directly to the pipeline (no manual scaling needed!)
+
+# Function for predicting direction of stocks with explainable drivers and candle history
+def predict_direction(ticker: str) -> dict:
+    ctx = get_latest_features_with_context(ticker)
+    features_df = ctx["features_df"]
+
+    # 2. Pass raw scale-invariant features directly to the pipeline
     probabilities = pipeline.predict_proba(features_df)
     up_probability = float(probabilities[0][1])
 
@@ -27,11 +39,32 @@ def predict_direction(ticker: str) -> dict:
     else:
         direction = "Neutral"
         action = "Hold / No Trade"
+
+    kelly_pct = calculate_kelly_size(up_probability)
+    latest_close = ctx.get("latest_close", 0.0)
+
+    # 3. Log prediction into persistent SQLite prediction ledger
+    try:
+        db_repository.record_prediction_in_ledger(
+            ticker=ticker,
+            direction=direction,
+            action=action,
+            confidence=round(up_probability, 4),
+            close_price=latest_close,
+        )
+    except Exception as e:
+        logger.warning("Failed to record prediction in ledger: %s", e)
+
     return {
         "ticker": ticker,
         "direction": direction,
         "action": action,
         "confidence": round(up_probability, 4),
+        "latest_close": latest_close,
+        "latest_date": ctx.get("latest_date", ""),
+        "kelly_position_pct": kelly_pct,
+        "drivers": ctx.get("drivers", []),
+        "history_candles": ctx.get("history_candles", []),
     }
 
 
@@ -55,3 +88,8 @@ def predict_batch(tickers: list[str]) -> list[dict]:
                 results.append({"ticker": ticker, "error": "Prediction failed."})
 
     return results
+
+
+def get_prediction_ledger() -> dict:
+    """Returns verified historical prediction ledger and rolling win rate."""
+    return db_repository.get_prediction_ledger(limit=30)

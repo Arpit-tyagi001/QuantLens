@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 
 from app.repository.stock_repository import is_candle_incomplete
+from app.repository import db_repository
 from ml.backtest import compare, run_backtest, summarize
-from ml.features import FEATURE_COLS, build_features
+from ml.features import FEATURE_COLS, build_features, explain_feature_drivers
 from ml.train import probabilities_to_signal
 
 
@@ -53,6 +54,34 @@ def test_build_features_scale_invariance():
 
     max_diff = np.max(np.abs(f_base - f_scaled))
     assert max_diff < 1e-6, f"Features differed by {max_diff} between 1x and 100x asset scale"
+
+
+def test_explain_feature_drivers():
+    df = _make_ohlcv(periods=90, flat=False)
+    out = build_features(df)
+    drivers = explain_feature_drivers(out.iloc[-1])
+    assert isinstance(drivers, list)
+    assert len(drivers) > 0
+    for d in drivers:
+        assert "name" in d
+        assert "impact" in d
+        assert "badge" in d
+        assert d["impact"] in ("positive", "negative", "neutral")
+
+
+def test_db_repository_caching_and_ledger():
+    db_repository.init_db()
+    df = _make_ohlcv(periods=10)
+    db_repository.save_candles_to_db("TEST_TICKER", df)
+    cached = db_repository.get_cached_candles_from_db("TEST_TICKER")
+    assert not cached.empty
+    assert len(cached) == 10
+
+    # Test ledger recording and retrieval
+    db_repository.record_prediction_in_ledger("TEST_TICKER", "Up", "Strong Buy", 0.65, 120.0)
+    ledger = db_repository.get_prediction_ledger(limit=10)
+    assert ledger["total_predictions"] > 0
+    assert "win_rate_pct" in ledger
 
 
 def test_is_candle_incomplete_intraday_guard():

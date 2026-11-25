@@ -35,17 +35,25 @@ def test_health_root():
 
 
 def test_predict_success_and_error_mapping():
-    dummy_df = pd.DataFrame([[0.0] * len(FEATURE_COLS)], columns=FEATURE_COLS)
-    with patch("app.services.predict_service.get_latest_features", return_value=dummy_df):
+    dummy_ctx = {
+        "features_df": pd.DataFrame([[0.0] * len(FEATURE_COLS)], columns=FEATURE_COLS),
+        "drivers": [{"name": "RSI Oversold", "impact": "positive", "badge": "30.0"}],
+        "history_candles": [{"date": "2026-11-20", "open": 100, "high": 105, "low": 99, "close": 104, "volume": 1000}],
+        "latest_close": 104.0,
+        "latest_date": "2026-11-20",
+    }
+    with patch("app.services.predict_service.get_latest_features_with_context", return_value=dummy_ctx):
         resp = client.post("/predict", json={"ticker": " aapl "})
     assert resp.status_code == 200
     body = resp.json()
     assert body["ticker"] == "AAPL"
     assert body["direction"] in ("Up", "Down", "Neutral")
     assert 0.0 <= body["confidence"] <= 1.0
+    assert "kelly_position_pct" in body
+    assert "drivers" in body
 
     with patch(
-        "app.services.predict_service.get_latest_features",
+        "app.services.predict_service.get_latest_features_with_context",
         side_effect=ValueError("No data found"),
     ):
         resp_404 = client.post("/predict", json={"ticker": "FAKE"})
@@ -56,10 +64,16 @@ def test_predict_success_and_error_mapping():
 
 
 def test_predict_batch_sanitizes_errors():
-    dummy_df = pd.DataFrame([[0.0] * len(FEATURE_COLS)], columns=FEATURE_COLS)
+    dummy_ctx = {
+        "features_df": pd.DataFrame([[0.0] * len(FEATURE_COLS)], columns=FEATURE_COLS),
+        "drivers": [],
+        "history_candles": [],
+        "latest_close": 150.0,
+        "latest_date": "2026-11-20",
+    }
     with patch(
-        "app.services.predict_service.get_latest_features",
-        side_effect=[dummy_df, RuntimeError("internal secret traceback")],
+        "app.services.predict_service.get_latest_features_with_context",
+        side_effect=[dummy_ctx, RuntimeError("internal secret traceback")],
     ):
         resp = client.post("/predict/batch", json={"tickers": ["AAPL", "ERR"]})
     assert resp.status_code == 200
@@ -68,8 +82,18 @@ def test_predict_batch_sanitizes_errors():
     assert items["ERR"]["error"] == "Prediction failed."
 
 
+def test_prediction_ledger_endpoint():
+    resp = client.get("/predict/ledger")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "total_predictions" in data
+    assert "win_rate_pct" in data
+    assert "ledger" in data
+    assert isinstance(data["ledger"], list)
+    assert len(data["ledger"]) > 0
+
+
 def test_rate_limiter_throttles_excessive_traffic():
-    # Save original state and simulate an IP exhausting quota
     ip = "192.168.1.99"
     headers = {"x-forwarded-for": ip}
 

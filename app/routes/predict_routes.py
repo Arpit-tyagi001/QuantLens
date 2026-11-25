@@ -24,3 +24,12 @@ def predict(request: PredictRequest):
 @router.post("/predict/batch")
 def predict_batch_endpoint(request: BatchPredictRequest):
     return predict_controller.handle_batch_predict(request)
+
+
+@router.get("/predict/ledger")
+def get_prediction_ledger_endpoint():
+    try:
+        return predict_controller.handle_get_ledger()
+    except Exception as e:
+        logger.exception("Failed to fetch prediction ledger")
+        raise HTTPException(status_code=500, detail="Failed to fetch prediction ledger.")
