@@ -141,3 +141,26 @@ def test_company_name_resolution_and_endpoint():
     resp_bad = client.get("/predict/resolve?q=INVALID!!!")
     assert resp_bad.status_code == 404
 
+
+def test_predict_search_suggestions():
+    # 1. Empty query returns default popular assets
+    resp_empty = client.get("/predict/search")
+    assert resp_empty.status_code == 200
+    suggestions = resp_empty.json()["suggestions"]
+    assert len(suggestions) > 0
+    symbols = [s["symbol"] for s in suggestions]
+    assert "NVDA" in symbols or "AAPL" in symbols
+
+    # 2. Query by company name returns matching suggestion
+    resp_goog = client.get("/predict/search?q=goo")
+    assert resp_goog.status_code == 200
+    goog_symbols = [s["symbol"] for s in resp_goog.json()["suggestions"]]
+    assert "GOOGL" in goog_symbols
+
+    # 3. Query by Indian company name
+    resp_rel = client.get("/predict/search?q=reli")
+    assert resp_rel.status_code == 200
+    rel_symbols = [s["symbol"] for s in resp_rel.json()["suggestions"]]
+    assert "RELIANCE.NS" in rel_symbols
+
+

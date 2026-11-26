@@ -249,3 +249,76 @@ def resolve_ticker(query: str) -> str:
         return upper
 
     raise ValueError(f"Could not resolve company name or ticker for {query!r}")
+
+
+# Curated catalog of institutional assets for autocomplete & discoverability
+POPULAR_ASSETS = [
+    {"symbol": "NVDA", "name": "NVIDIA Corporation", "exchange": "NASDAQ", "category": "Semiconductors"},
+    {"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ", "category": "Consumer Tech"},
+    {"symbol": "GOOGL", "name": "Alphabet Inc. (Google)", "exchange": "NASDAQ", "category": "Internet & AI"},
+    {"symbol": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ", "category": "Enterprise Software"},
+    {"symbol": "AMZN", "name": "Amazon.com Inc.", "exchange": "NASDAQ", "category": "E-Commerce & Cloud"},
+    {"symbol": "TSLA", "name": "Tesla Inc.", "exchange": "NASDAQ", "category": "Clean Energy & Auto"},
+    {"symbol": "META", "name": "Meta Platforms Inc.", "exchange": "NASDAQ", "category": "Social Media & AI"},
+    {"symbol": "RELIANCE.NS", "name": "Reliance Industries Ltd.", "exchange": "NSE", "category": "Energy & Telecom"},
+    {"symbol": "TCS.NS", "name": "Tata Consultancy Services", "exchange": "NSE", "category": "IT Services"},
+    {"symbol": "HDFCBANK.NS", "name": "HDFC Bank Ltd.", "exchange": "NSE", "category": "Banking"},
+    {"symbol": "INFY.NS", "name": "Infosys Ltd.", "exchange": "NSE", "category": "IT Services"},
+    {"symbol": "TATAMOTORS.NS", "name": "Tata Motors Ltd.", "exchange": "NSE", "category": "Automotive"},
+    {"symbol": "ICICIBANK.NS", "name": "ICICI Bank Ltd.", "exchange": "NSE", "category": "Banking"},
+    {"symbol": "SBIN.NS", "name": "State Bank of India", "exchange": "NSE", "category": "Banking"},
+    {"symbol": "BHARTIARTL.NS", "name": "Bharti Airtel Ltd.", "exchange": "NSE", "category": "Telecom"},
+    {"symbol": "ZOMATO.NS", "name": "Zomato Ltd.", "exchange": "NSE", "category": "Tech & Delivery"},
+    {"symbol": "SWIGGY.NS", "name": "Swiggy Ltd.", "exchange": "NSE", "category": "Tech & Delivery"},
+    {"symbol": "PLTR", "name": "Palantir Technologies", "exchange": "NYSE", "category": "AI & Big Data"},
+    {"symbol": "AMD", "name": "Advanced Micro Devices", "exchange": "NASDAQ", "category": "Semiconductors"},
+    {"symbol": "BTC-USD", "name": "Bitcoin USD", "exchange": "CRYPTO", "category": "Digital Asset"},
+    {"symbol": "ETH-USD", "name": "Ethereum USD", "exchange": "CRYPTO", "category": "Digital Asset"},
+    {"symbol": "^NSEI", "name": "Nifty 50 Index", "exchange": "NSE", "category": "Index"},
+    {"symbol": "^GSPC", "name": "S&P 500 Index", "exchange": "US", "category": "Index"},
+    {"symbol": "^IXIC", "name": "Nasdaq Composite", "exchange": "NASDAQ", "category": "Index"},
+]
+
+
+def search_suggestions(query: str = "", limit: int = 8) -> list:
+    """Return top asset and company suggestions matching query for UI autocomplete."""
+    if not query or not query.strip():
+        return POPULAR_ASSETS[:limit]
+
+    q = query.strip().lower()
+    results = []
+    seen = set()
+
+    # 1. Exact or prefix symbol match in popular catalogue
+    for asset in POPULAR_ASSETS:
+        sym = asset["symbol"].lower()
+        if sym.startswith(q) or sym.replace(".ns", "").startswith(q):
+            results.append(asset)
+            seen.add(asset["symbol"])
+
+    # 2. Substring or name match in popular catalogue
+    for asset in POPULAR_ASSETS:
+        if asset["symbol"] in seen:
+            continue
+        if q in asset["name"].lower() or q in asset["category"].lower():
+            results.append(asset)
+            seen.add(asset["symbol"])
+
+    # 3. Match from static aliases
+    for alias, symbol in STATIC_ALIASES.items():
+        if len(results) >= limit:
+            break
+        if symbol in seen:
+            continue
+        if alias.startswith(q) or q in alias:
+            exch = "NSE" if symbol.endswith(".NS") else "CRYPTO" if "USD" in symbol else "US"
+            results.append({
+                "symbol": symbol,
+                "name": alias.title(),
+                "exchange": exch,
+                "category": "Equity",
+            })
+            seen.add(symbol)
+
+    return results[:limit]
+

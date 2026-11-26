@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from app.controllers import predict_controller
 from app.schemas.predict_schema import PredictRequest, BatchPredictRequest
-from app.services.ticker_resolver import resolve_ticker
+from app.services.ticker_resolver import resolve_ticker, search_suggestions
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -35,6 +35,18 @@ def resolve_company_ticker(q: str):
         return {"query": q, "symbol": symbol}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/predict/search")
+def search_tickers_and_companies(q: str = "", limit: int = 8):
+    """Provide autocomplete suggestions for tickers, company names, and asset classes."""
+    try:
+        suggestions = search_suggestions(query=q, limit=min(limit, 20))
+        return {"query": q, "suggestions": suggestions}
+    except Exception as e:
+        logger.exception("Search suggestions failed for query %r", q)
+        return {"query": q, "suggestions": []}
+
 
 
 @router.get("/predict/ledger")
