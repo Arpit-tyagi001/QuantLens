@@ -7,9 +7,10 @@ export default function CommandBar({ onSearch, isLoading }) {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
     
+    // Support company names or ticker symbols separated by commas
     const tickers = inputValue
       .split(',')
-      .map(t => t.trim().toUpperCase())
+      .map(t => t.trim())
       .filter(t => t.length > 0);
       
     if (tickers.length > 0) onSearch(tickers);
@@ -31,7 +32,7 @@ export default function CommandBar({ onSearch, isLoading }) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           disabled={isLoading}
-          placeholder="Enter tickers (AAPL, MSFT, GOOG)..."
+          placeholder="Enter company names or tickers (Google, Reliance, Apple, NVDA)..."
           className="w-full bg-transparent text-zinc-100 placeholder-zinc-600 text-sm py-4 outline-none disabled:opacity-50 font-mono"
         />
 

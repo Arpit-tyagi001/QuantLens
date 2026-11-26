@@ -111,3 +111,33 @@ def test_rate_limiter_throttles_excessive_traffic():
 
     # Cleanup
     rate_limiter.requests.pop(ip, None)
+
+
+def test_company_name_resolution_and_endpoint():
+    # 1. Pydantic single predict normalization
+    req_google = PredictRequest(ticker="Google")
+    assert req_google.ticker == "GOOGL"
+
+    req_apple = PredictRequest(ticker="Apple")
+    assert req_apple.ticker == "AAPL"
+
+    req_reliance = PredictRequest(ticker="Reliance")
+    assert req_reliance.ticker == "RELIANCE.NS"
+
+    # 2. Pydantic batch predict normalization with company names
+    batch = BatchPredictRequest(tickers=["Google", "Apple", "Reliance", "NVDA"])
+    assert batch.tickers == ["GOOGL", "AAPL", "RELIANCE.NS", "NVDA"]
+
+    # 3. GET /predict/resolve endpoint
+    resp_resolve = client.get("/predict/resolve?q=Google")
+    assert resp_resolve.status_code == 200
+    assert resp_resolve.json()["symbol"] == "GOOGL"
+
+    resp_resolve_rel = client.get("/predict/resolve?q=Reliance")
+    assert resp_resolve_rel.status_code == 200
+    assert resp_resolve_rel.json()["symbol"] == "RELIANCE.NS"
+
+    # 4. Unknown/invalid query to /predict/resolve returns 404
+    resp_bad = client.get("/predict/resolve?q=INVALID!!!")
+    assert resp_bad.status_code == 404
+

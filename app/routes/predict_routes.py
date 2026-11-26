@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from app.controllers import predict_controller
 from app.schemas.predict_schema import PredictRequest, BatchPredictRequest
+from app.services.ticker_resolver import resolve_ticker
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -24,6 +25,16 @@ def predict(request: PredictRequest):
 @router.post("/predict/batch")
 def predict_batch_endpoint(request: BatchPredictRequest):
     return predict_controller.handle_batch_predict(request)
+
+
+@router.get("/predict/resolve")
+def resolve_company_ticker(q: str):
+    """Resolve a company name or alias to its market ticker symbol."""
+    try:
+        symbol = resolve_ticker(q)
+        return {"query": q, "symbol": symbol}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.get("/predict/ledger")

@@ -1,16 +1,18 @@
 import re
 from typing import List
 from pydantic import BaseModel, Field, field_validator
-
-TICKER_PATTERN = re.compile(r"^[A-Z0-9.\-^=]{1,15}$")
+from app.services.ticker_resolver import resolve_ticker, TICKER_PATTERN
 
 
 def _normalize_ticker(value: str) -> str:
-    """Trim, uppercase, and validate a stock ticker symbol."""
-    cleaned = value.strip().upper()
-    if not TICKER_PATTERN.match(cleaned):
+    """Resolve company name/alias or validate stock ticker symbol."""
+    if not isinstance(value, str) or not value.strip():
         raise ValueError(f"Invalid ticker format: {value!r}")
-    return cleaned
+    try:
+        resolved = resolve_ticker(value)
+        return resolved
+    except Exception as e:
+        raise ValueError(f"Unable to resolve ticker or company name for {value!r}: {e}")
 
 
 class PredictRequest(BaseModel):
