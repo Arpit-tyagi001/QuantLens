@@ -1,7 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+function getMarketStatus() {
+  const now = new Date();
+  const utcDay = now.getUTCDay(); // 0 = Sun, 6 = Sat
+  const isWeekday = utcDay >= 1 && utcDay <= 5;
+  const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+
+  // NSE Market Hours (IST 09:15 to 15:30 => UTC 03:45 to 10:00)
+  const isNseOpen = isWeekday && utcMinutes >= 225 && utcMinutes <= 600;
+
+  // US NYSE/NASDAQ Market Hours (EST 09:30 to 16:00 => UTC 14:30 to 21:00)
+  const isUsOpen = isWeekday && utcMinutes >= 870 && utcMinutes <= 1260;
+
+  return { isNseOpen, isUsOpen };
+}
 
 export default function NavBar({ activePage, onNavigate }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [marketStatus, setMarketStatus] = useState(getMarketStatus);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMarketStatus(getMarketStatus());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   const navItems = [
     { id: 'home', label: 'Home' },
@@ -17,7 +40,7 @@ export default function NavBar({ activePage, onNavigate }) {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#060608]/80 backdrop-blur-xl border-b border-white/[0.04] shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#060608]/85 backdrop-blur-xl border-b border-white/[0.04] shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
       <div className="container mx-auto px-6 h-16 flex items-center justify-between max-w-6xl">
 
         {/* Logo Section */}
@@ -60,8 +83,29 @@ export default function NavBar({ activePage, onNavigate }) {
           })}
         </div>
 
-        {/* Right Socials & Links */}
-        <div className="hidden lg:flex items-center gap-5">
+        {/* Live Market Sessions Status & Socials */}
+        <div className="hidden lg:flex items-center gap-4">
+          {/* Market Status Badges */}
+          <div className="flex items-center gap-2 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5 font-mono text-[11px]">
+            <div className="flex items-center gap-1" title={marketStatus.isNseOpen ? 'NSE (India) is currently OPEN' : 'NSE (India) is CLOSED'}>
+              <span className={`w-1.5 h-1.5 rounded-full ${marketStatus.isNseOpen ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`}></span>
+              <span className={marketStatus.isNseOpen ? 'text-emerald-400 font-semibold' : 'text-zinc-500'}>
+                NSE {marketStatus.isNseOpen ? 'OPEN' : 'CLOSED'}
+              </span>
+            </div>
+
+            <span className="text-zinc-700">|</span>
+
+            <div className="flex items-center gap-1" title={marketStatus.isUsOpen ? 'NYSE/NASDAQ (US) is currently OPEN' : 'NYSE/NASDAQ (US) is CLOSED'}>
+              <span className={`w-1.5 h-1.5 rounded-full ${marketStatus.isUsOpen ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`}></span>
+              <span className={marketStatus.isUsOpen ? 'text-emerald-400 font-semibold' : 'text-zinc-500'}>
+                US {marketStatus.isUsOpen ? 'OPEN' : 'CLOSED'}
+              </span>
+            </div>
+          </div>
+
+          <div className="h-3.5 w-px bg-zinc-800"></div>
+
           <a
             href="https://github.com/Arpit-tyagi001/QuantLens#readme"
             target="_blank"
@@ -70,8 +114,6 @@ export default function NavBar({ activePage, onNavigate }) {
           >
             Docs
           </a>
-
-          <div className="h-3.5 w-px bg-zinc-800"></div>
 
           {/* LinkedIn */}
           <a
@@ -118,7 +160,23 @@ export default function NavBar({ activePage, onNavigate }) {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#060608]/95 border-b border-white/10 px-6 py-4 space-y-2 backdrop-blur-xl animate-fadeIn">
+        <div className="md:hidden bg-[#060608]/95 border-b border-white/10 px-6 py-4 space-y-3 backdrop-blur-xl animate-fadeIn">
+          {/* Mobile Market Status */}
+          <div className="flex items-center justify-around bg-black/60 p-2 rounded-lg border border-white/5 font-mono text-xs mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${marketStatus.isNseOpen ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`}></span>
+              <span className={marketStatus.isNseOpen ? 'text-emerald-400' : 'text-zinc-500'}>
+                NSE {marketStatus.isNseOpen ? 'OPEN' : 'CLOSED'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${marketStatus.isUsOpen ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`}></span>
+              <span className={marketStatus.isUsOpen ? 'text-emerald-400' : 'text-zinc-500'}>
+                US {marketStatus.isUsOpen ? 'OPEN' : 'CLOSED'}
+              </span>
+            </div>
+          </div>
+
           {navItems.map((item) => (
             <button
               key={item.id}
