@@ -115,3 +115,20 @@ export async function fetchPredictionLedger() {
   }
   return await response.json();
 }
+
+/**
+ * Searches for companies and tickers matching a query for autocomplete.
+ * @param {string} query
+ * @returns {Promise<Array>}
+ */
+export async function searchSuggestions(query = "") {
+  try {
+    const encoded = encodeURIComponent((query || "").trim());
+    const response = await fetch(`${API_BASE_URL}/predict/search?q=${encoded}&limit=8`);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data?.suggestions) ? data.suggestions : [];
+  } catch {
+    return [];
+  }
+}
